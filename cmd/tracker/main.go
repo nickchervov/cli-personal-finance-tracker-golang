@@ -158,6 +158,8 @@ func main() {
 	fmt.Println("Привет! Это трекер личных финансов.")
 	fmt.Println()
 
+	tracker.LoadFromFile("transactions.json")
+
 	for runProgramm(&tracker) {
 	}
 }
