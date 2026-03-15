@@ -1,6 +1,9 @@
 package finance
 
 import (
+	"encoding/json"
+	"log"
+	"os"
 	"strings"
 	"time"
 )
@@ -15,6 +18,27 @@ type Transaction struct {
 
 type FinanceTracker struct {
 	Transactions []Transaction
+}
+
+func (ft *FinanceTracker) SaveToFile(filename string) error {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Fatal()
+		}
+	}()
+
+	encoder := json.NewEncoder(file)
+
+	err = encoder.Encode(ft.Transactions)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (ft *FinanceTracker) AddTransaction(amount int, transactionType, category, desc string) error {

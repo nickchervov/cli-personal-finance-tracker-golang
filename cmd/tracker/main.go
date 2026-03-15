@@ -141,6 +141,10 @@ func runProgramm(tracker *finance.FinanceTracker) bool {
 
 	case 4:
 		fmt.Println()
+		err = tracker.SaveToFile("transactions.json")
+		if err != nil {
+			log.Println(err)
+		}
 		fmt.Println("До свидания!")
 		return false
 	default:
