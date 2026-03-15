@@ -21,7 +21,7 @@ type FinanceTracker struct {
 }
 
 func (ft *FinanceTracker) SaveToFile(filename string) error {
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
@@ -34,11 +34,24 @@ func (ft *FinanceTracker) SaveToFile(filename string) error {
 
 	encoder := json.NewEncoder(file)
 
-	err = encoder.Encode(ft.Transactions)
+	return encoder.Encode(ft.Transactions)
+}
+
+func (ft *FinanceTracker) LoadFromFile(filename string) error {
+	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
-	return nil
+	defer func() {
+		err = file.Close()
+		if err != nil {
+			log.Fatal()
+		}
+	}()
+
+	decoder := json.NewDecoder(file)
+
+	return decoder.Decode(&ft.Transactions)
 }
 
 func (ft *FinanceTracker) AddTransaction(amount int, transactionType, category, desc string) error {
