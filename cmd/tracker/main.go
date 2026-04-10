@@ -107,13 +107,56 @@ func getStatistic(tracker *finance.FinanceTracker) {
 	fmt.Println("Расходы:", expense)
 }
 
+func getAllTransactionByCategory(category string, tracker *finance.FinanceTracker) {
+	outputTransactions := `Номер транзакции: %d
+Сумма: %d
+Тип: %s
+Категория: %s
+Описание: %s
+Дата: %s
+
+`
+	transByCategory := tracker.GetTransactionsByCategory(category)
+
+	for i, trans := range transByCategory {
+		fmt.Printf(outputTransactions, i+1, trans.Amount, trans.Type, trans.Category, trans.Description, trans.Date.Format("02.01.2006 15:04:05"))
+	}
+}
+
+func getAllTransactionByMonth(month int, tracker *finance.FinanceTracker) {
+	transByMonth := tracker.GetMonthlySummary(month)
+	for k, v := range transByMonth {
+		fmt.Printf("%s : %d\n", k, v)
+	}
+}
+
+func getLargestExpensive(tracker *finance.FinanceTracker) {
+	outputTransaction := `Сумма: %d
+Категория: %s
+Описание: %s
+Дата: %s
+
+`
+	largestExpensive, err := tracker.FindLargestExpense()
+	if err != nil {
+		log.Println(err)
+	}
+	if largestExpensive != nil {
+		fmt.Println("--- Самая крупный расход ---")
+		fmt.Printf(outputTransaction, largestExpensive.Amount, largestExpensive.Category, largestExpensive.Description, largestExpensive.Date.Format("01.02.2006"))
+	}
+}
+
 func runProgramm(tracker *finance.FinanceTracker) bool {
 
 	intro := `Выберите действие:
 1. Добавить транзакцию
 2. Показать все транзакции
-3. Показать статистику
-4. Выйти`
+3. Показать все транзакции по категории
+4. Показать все транзакции по месяцу
+5. Показать самую большую трату
+6. Показать статистику
+7. Выйти`
 
 	fmt.Println(intro)
 
@@ -136,10 +179,28 @@ func runProgramm(tracker *finance.FinanceTracker) bool {
 		fmt.Println()
 	case 3:
 		fmt.Println()
+		category := input("Введите категорию транзакции:")
+		getAllTransactionByCategory(category, tracker)
+		fmt.Println()
+	case 4:
+		fmt.Println()
+		month, err := strconv.Atoi(input("Введите число месяца:"))
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+		getAllTransactionByMonth(month, tracker)
+		fmt.Println()
+	case 5:
+		fmt.Println()
+		getLargestExpensive(tracker)
+		fmt.Println()
+	case 6:
+		fmt.Println()
 		getStatistic(tracker)
 		fmt.Println()
 
-	case 4:
+	case 7:
 		fmt.Println()
 		err = tracker.SaveToFile("transactions.json")
 		if err != nil {

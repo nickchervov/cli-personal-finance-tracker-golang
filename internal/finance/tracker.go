@@ -2,6 +2,8 @@ package finance
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -70,6 +72,73 @@ func (ft *FinanceTracker) AddTransaction(amount int, transactionType, category, 
 
 func (ft *FinanceTracker) GetAllTransactions() []Transaction {
 	return ft.Transactions
+}
+
+func (ft *FinanceTracker) GetTransactionsByCategory(category string) []Transaction {
+	if category == "" {
+		fmt.Println("Необходимо ввести категорию!")
+		return nil
+	}
+	transByCategory := []Transaction{}
+
+	for _, trans := range ft.Transactions {
+		if strings.EqualFold(trans.Category, category) {
+			transByCategory = append(transByCategory, trans)
+		}
+	}
+
+	if len(transByCategory) == 0 {
+		fmt.Println("Транзакций по данной категории не найдено!")
+	}
+	return transByCategory
+}
+
+func (ft *FinanceTracker) GetMonthlySummary(month int) map[string]int {
+	if month < 1 || month > 12 {
+		fmt.Println("Такого месяца не существует!")
+		return nil
+	}
+	result := make(map[string]int)
+
+	for _, trans := range ft.Transactions {
+		if trans.Date.Month() != time.Month(month) {
+			continue
+		}
+
+		var label string
+		if strings.ToLower(trans.Type) == "расход" {
+			label = fmt.Sprintf("Расход_%s", trans.Date.Format("01.02.2006"))
+		} else if strings.ToLower(trans.Type) == "доход" {
+			label = fmt.Sprintf("Доход_%s", trans.Date.Format("01.02.2006"))
+		} else {
+			continue
+		}
+		result[label] += trans.Amount
+	}
+
+	if len(result) == 0 {
+		fmt.Println("В данном месяце нет доходов или расходов.")
+	}
+	return result
+}
+
+func (ft *FinanceTracker) FindLargestExpense() (*Transaction, error) {
+	largestExpense := (*Transaction)(nil)
+	errNoExpense := errors.New("нет расходов")
+
+	for _, trans := range ft.Transactions {
+		if strings.ToLower(trans.Type) == "доход" {
+			continue
+		}
+		if largestExpense == nil || trans.Amount > largestExpense.Amount {
+			largestExpense = &trans
+		}
+	}
+
+	if largestExpense != nil {
+		return largestExpense, nil
+	}
+	return nil, errNoExpense
 }
 
 func (ft *FinanceTracker) GetBalance() int {
